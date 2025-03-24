@@ -30,3 +30,17 @@ output "backend_subnet_a_id" {
 output "backend_subnet_c_id" {
   value = aws_subnet.backend_c.id
 }
+
+output "public_subnet_ids" {
+  value = [
+    aws_subnet.public_a.id,
+    aws_subnet.public_c.id
+  ]
+}
+
+output "frontend_subnet_ids" {
+  value = [
+    aws_subnet.frontend_a.id,
+    aws_subnet.frontend_c.id
+  ]
+}
