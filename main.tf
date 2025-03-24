@@ -157,6 +157,15 @@ resource "aws_security_group" "backend_ec2_sg" {
     security_groups = [aws_security_group.backend_alb_sg.id]
   }
 
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [module.openvpn.security_group_id] # ✅ 여기!
+  }
+
+
+
   egress {
     description = "Allow all outbound traffic"
     from_port   = 0
@@ -186,4 +195,37 @@ module "backend_asg" {
   max_size               = var.backend_max_size
   desired_capacity       = var.backend_desired_capacity
   user_data              = filebase64("${path.module}/userdata/backend.sh")
+}
+
+
+
+
+
+module "codedeploy_backend" {
+  source = "./modules/codedeploy/backend"
+
+  app_name              = "backend-app"
+  deployment_group_name = "backend-deploy-group"
+  service_role_name     = "CodeDeployRole"
+  ec2_tag_key           = "Name"
+  ec2_tag_value         = "backend"
+}
+
+
+
+
+module "openvpn" {
+  source = "./modules/openvpn"
+
+  vpc_id           = module.vpc.vpc_id
+  public_subnet_id = module.vpc.public_subnet_a_id
+
+  openvpn_ami_id   = "ami-0da165fc7156630d7" 
+  key_name         = "keypair-kube-master"
+}
+
+
+module "s3" {
+  source      = "./modules/s3"
+  bucket_name = var.codedeploy_bucket_name
 }

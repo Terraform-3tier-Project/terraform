@@ -40,3 +40,6 @@ variable "backend_instance_type" {}
 variable "backend_min_size" {}
 variable "backend_max_size" {}
 variable "backend_desired_capacity" {}
+
+
+variable "codedeploy_bucket_name" {}
