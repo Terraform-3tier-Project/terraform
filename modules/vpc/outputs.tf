@@ -44,3 +44,12 @@ output "frontend_subnet_ids" {
     aws_subnet.frontend_c.id
   ]
 }
+
+
+output "backend_subnet_ids" {
+  description = "List of backend subnet IDs"
+  value = [
+    aws_subnet.backend_a.id,
+    aws_subnet.backend_c.id
+  ]
+}

@@ -92,3 +92,98 @@ module "backend_alb" {
   frontend_subnet_ids  = module.vpc.frontend_subnet_ids
   lb_sg_ids          = [aws_security_group.backend_alb_sg.id]
 }
+
+
+
+
+###################
+resource "aws_security_group" "frontend_ec2_sg" {
+  name        = "frontend-ec2-sg"
+  description = "Allow HTTP from ALB"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    description = "Allow HTTP from ALB SG"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    security_groups = [aws_security_group.frontend_alb_sg.id]
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "frontend-ec2-sg"
+  }
+}
+
+
+module "frontend_asg" {
+  source = "./modules/autoscaling"
+
+  ami_id                 = var.frontend_ami_id
+  instance_type          = var.frontend_instance_type
+  key_name               = var.key_name
+  ec2_sg_ids             = [aws_security_group.frontend_ec2_sg.id]
+  subnet_ids             = module.vpc.frontend_subnet_ids
+  target_group_arn       = module.frontend_alb.frontend_target_group_arn
+  instance_profile_name  = var.instance_profile_name
+  instance_name          = "frontend"
+  asg_name_prefix        = "frontend-asg-"
+  min_size               = var.frontend_min_size
+  max_size               = var.frontend_max_size
+  desired_capacity       = var.frontend_desired_capacity
+  user_data              = filebase64("${path.module}/userdata/frontend.sh")
+}
+
+
+
+resource "aws_security_group" "backend_ec2_sg" {
+  name        = "backend-ec2-sg"
+  description = "Allow HTTP from backend ALB"
+  vpc_id      = module.vpc.vpc_id
+
+  ingress {
+    description     = "Allow 3000 from backend ALB SG"
+    from_port       = 3000
+    to_port         = 3000
+    protocol        = "tcp"
+    security_groups = [aws_security_group.backend_alb_sg.id]
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "backend-ec2-sg"
+  }
+}
+
+module "backend_asg" {
+  source = "./modules/autoscaling"
+
+  ami_id                 = var.backend_ami_id
+  instance_type          = var.backend_instance_type
+  key_name               = var.key_name
+  ec2_sg_ids             = [aws_security_group.backend_ec2_sg.id]
+  subnet_ids             = module.vpc.backend_subnet_ids
+  target_group_arn       = module.backend_alb.backend_target_group_arn
+  instance_profile_name  = var.instance_profile_name
+  instance_name          = "backend"
+  asg_name_prefix        = "backend-asg-"
+  min_size               = var.backend_min_size
+  max_size               = var.backend_max_size
+  desired_capacity       = var.backend_desired_capacity
+  user_data              = filebase64("${path.module}/userdata/backend.sh")
+}

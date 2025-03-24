@@ -3,7 +3,8 @@ output "alb_dns_name" {
   value       = aws_lb.frontend_alb.dns_name
 }
 
-output "target_group_arn" {
+output "frontend_target_group_arn" {
   description = "ARN of the frontend Target Group"
   value       = aws_lb_target_group.frontend_tg.arn
 }
+
