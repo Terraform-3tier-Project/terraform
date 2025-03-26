@@ -27,7 +27,7 @@ resource "aws_autoscaling_group" "this" {
   desired_capacity    = var.desired_capacity
   vpc_zone_identifier = var.subnet_ids
 
-  target_group_arns = [var.target_group_arn]
+  target_group_arns = var.target_group_arns
 
   launch_template {
     id      = aws_launch_template.this.id

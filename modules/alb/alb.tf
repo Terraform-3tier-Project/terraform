@@ -5,7 +5,7 @@ resource "aws_lb" "backend_alb" {
   internal           = true  # 내부 전용 ALB
   load_balancer_type = "application"
   security_groups    = var.lb_sg_ids # ALB 보안그룹 
-  subnets            = var.public_subnet_ids  # 필요에 따라 private_subnet_ids도 가능
+  subnets            = var.public_subnet_ids  
 
   tags = {
     Name = "backend-alb"

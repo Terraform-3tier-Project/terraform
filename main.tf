@@ -41,6 +41,13 @@ resource "aws_security_group" "backend_alb_sg" {
     cidr_blocks = ["0.0.0.0/0"] # 외부 접근 허용
   }
 
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"] # 또는 CloudFront IP CIDR
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -54,18 +61,6 @@ resource "aws_security_group" "backend_alb_sg" {
 }
 
 
-module "backend_alb" {
-  source             = "./modules/alb"
-  # ALB가 속할 VPC
-  vpc_id = module.vpc.vpc_id
-  # ALB가 배치될 퍼블릭 서브넷 2개
-  public_subnet_ids = [
-    module.vpc.public_subnet_a_id,
-    module.vpc.public_subnet_c_id
-  ]
-  # ALB 보안 그룹
-  lb_sg_ids = [aws_security_group.backend_alb_sg.id]
-}
 
 
 
@@ -113,7 +108,12 @@ module "backend_asg" {
   key_name               = var.key_name
   ec2_sg_ids             = [aws_security_group.backend_ec2_sg.id]
   subnet_ids             = module.vpc.backend_subnet_ids
-  target_group_arn       = module.backend_alb.backend_target_group_arn
+
+  # ✅ internal + public ALB 둘 다 연결
+  target_group_arns = [
+    module.backend_public_alb.backend_target_group_arn
+  ]
+
   instance_profile_name  = var.instance_profile_name
   instance_name          = "backend"
   asg_name_prefix        = "backend-asg-"
@@ -154,4 +154,71 @@ module "openvpn" {
 module "s3" {
   source      = "./modules/s3"
   bucket_name = var.codedeploy_bucket_name
+
 }
+
+
+module "cloudfront" {
+  source = "./modules/cloudfront"
+
+  bucket_name                 = module.s3.bucket_name
+  bucket_arn                  = module.s3.bucket_arn
+  bucket_regional_domain_name = module.s3.bucket_regional_domain_name
+  folder_path                 = "frontend/"
+
+  backend_alb_dns_name = module.backend_public_alb.alb_dns_name
+}
+
+
+
+resource "aws_s3_bucket_policy" "combined_access" {
+  bucket = module.s3.bucket_name
+
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      # CloudFront용
+      {
+        Effect = "Allow",
+        Principal = {
+          Service = "cloudfront.amazonaws.com"
+        },
+        Action = "s3:GetObject",
+        Resource = "${module.s3.bucket_arn}/frontend/*",
+        Condition = {
+          StringEquals = {
+            "AWS:SourceArn" = module.cloudfront.cloudfront_arn
+          }
+        }
+      },
+
+      # GitHub Actions에서 사용하는 IAM 사용자 권한
+      {
+        Effect = "Allow",
+        Principal = {
+          AWS = "arn:aws:iam::084375578827:user/Sanghyun_Jun"
+        },
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject"
+        ],
+        Resource = "${module.s3.bucket_arn}/frontend/*"
+      }
+    ]
+  })
+}
+
+
+module "backend_public_alb" {
+  source = "./modules/alb_public"
+
+  name        = "backend-public-alb"
+  vpc_id      = module.vpc.vpc_id
+  subnet_ids  = [
+    module.vpc.public_subnet_a_id,
+    module.vpc.public_subnet_c_id
+  ]
+  lb_sg_ids   = [aws_security_group.backend_alb_sg.id]
+}
+
+

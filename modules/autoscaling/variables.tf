@@ -23,10 +23,11 @@ variable "subnet_ids" {
   type        = list(string)
 }
 
-variable "target_group_arn" {
-  description = "Target group ARN for ALB"
-  type        = string
+variable "target_group_arns" {
+  description = "List of Target Group ARNs to attach to the ASG"
+  type        = list(string)
 }
+
 
 variable "instance_profile_name" {
   description = "IAM instance profile name"
