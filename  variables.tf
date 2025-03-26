@@ -25,15 +25,8 @@ variable "az_c" {}
 #############################################
 
 
-variable "frontend_ami_id" {}
-variable "frontend_instance_type" {}
 variable "key_name" {}
 variable "instance_profile_name" {}
-
-variable "frontend_min_size" {}
-variable "frontend_max_size" {}
-variable "frontend_desired_capacity" {}
-
 
 variable "backend_ami_id" {}
 variable "backend_instance_type" {}

@@ -42,26 +42,6 @@ resource "aws_subnet" "public_c" {
   }
 }
 
-# frontend Subnet A
-resource "aws_subnet" "frontend_a" {
-  vpc_id            = aws_vpc.this.id
-  cidr_block        = var.frontend_subnet_a_cidr  # ex) "10.0.101.0/24"
-  availability_zone = var.az_a
-  tags = {
-    Name = var.frontend_subnet_a_name
-  }
-}
-
-# frontend Subnet C
-resource "aws_subnet" "frontend_c" {
-  vpc_id            = aws_vpc.this.id
-  cidr_block        = var.frontend_subnet_c_cidr  # ex) "10.0.102.0/24"
-  availability_zone = var.az_c
-  tags = {
-    Name = var.frontend_subnet_c_name
-  }
-}
-
 # backend Subnet A
 resource "aws_subnet" "backend_a" {
   vpc_id            = aws_vpc.this.id
@@ -122,33 +102,6 @@ resource "aws_route_table_association" "public_c_assoc" {
   subnet_id      = aws_subnet.public_c.id
   route_table_id = aws_route_table.public_rt.id
 }
-
-#####################
-# Frontend Route Table (NAT Gateway 경유)
-resource "aws_route_table" "frontend_rt" {
-  vpc_id = aws_vpc.this.id
-  route {
-    cidr_block     = "0.0.0.0/0"               # 모든 트래픽
-    nat_gateway_id = aws_nat_gateway.this.id   # NAT 게이트웨이 경유
-  }
-  tags = {
-    Name = "${var.vpc_name}-frontend-rt"
-  }
-}
-
-# Frontend Subnet A 라우트 테이블 연관
-resource "aws_route_table_association" "frontend_a_assoc" {
-  subnet_id      = aws_subnet.frontend_a.id
-  route_table_id = aws_route_table.frontend_rt.id
-}
-
-# Frontend Subnet C 라우트 테이블 연관
-resource "aws_route_table_association" "frontend_c_assoc" {
-  subnet_id      = aws_subnet.frontend_c.id
-  route_table_id = aws_route_table.frontend_rt.id
-}
-#####################
-
 
 # Backend Route Table (NAT Gateway 경유)
 resource "aws_route_table" "backend_rt" {

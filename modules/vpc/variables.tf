@@ -33,26 +33,6 @@ variable "public_subnet_c_name" {
   type        = string
 }
 
-variable "frontend_subnet_a_cidr" {
-  description = "CIDR for Private Subnet A"
-  type        = string
-}
-
-variable "frontend_subnet_a_name" {
-  description = "Name tag for Private Subnet A"
-  type        = string
-}
-
-variable "frontend_subnet_c_cidr" {
-  description = "CIDR for Private Subnet C"
-  type        = string
-}
-
-variable "frontend_subnet_c_name" {
-  description = "Name tag for Private Subnet C"
-  type        = string
-}
-
 variable "backend_subnet_a_cidr" {
   description = "CIDR for Private Subnet A"
   type        = string
