@@ -13,7 +13,6 @@ resource "aws_s3_bucket_versioning" "this" {
   }
 }
 
-
 resource "aws_s3_bucket_public_access_block" "this" {
   bucket = aws_s3_bucket.codedeploy_bucket.id
   block_public_acls       = true
